@@ -14,8 +14,8 @@ Tommy Yu
 Description
 ==============
 An CMS written in django 1.7, aimed to have the following features:
-1. user defined WYSIWYG website<br>
-2. content searching
+1. user defined WYSIWYG website\n
+2. content searching\n
 3. theme system which allow the designer to design individual theme for real use.
 4. content type(user defined model) support
 
