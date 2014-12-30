@@ -37,4 +37,20 @@ class AccessDenied(Exception):
     """base class for Exception of access"""
     pass
 
+
+#concret classes below down
+class Tag(TreeModelBase):
+    pass
+
+class ContentType(TreeModelBase):
+    pass
+
+class Menu(TreeModelBase):
+    state=models.CharField(max_length=32, choices=[('draft','draft'),('confirmed','confirmed'),('cancel','cancel')]
+    url=models.UrlField()
+    
+
+
+
+
     
