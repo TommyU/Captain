@@ -1,14 +1,14 @@
 from django.db import models
-from django.contrib.auth.models impor User
+from django.contrib.auth.models import User
 from mptt.models import MPTTModel,TreeForeignKey
 
 # base classes for most of the classes
 class BaseModel(models.Model):
     """base class for class which need to be under CRUD control"""
-    created_date = models.DateTimeField(auto_add=True)
-    creator = models.ForeignKey(User)
+    created_date = models.DateTimeField(auto_now_add=True)
+    creator = models.ForeignKey(User, related_name='creator_%(class)s_set')
     updated_date = models.DateTimeField(auto_now=True)
-    updator = models.ForeignKey(User)
+    updator = models.ForeignKey(User, related_name='updator_%(class)s_set')
 
     class Meta:
         abstract=True
@@ -30,6 +30,8 @@ class TreeModelBase(MPTTModel,BaseModel):
     
     class MPTTMeta:
         order_insertion_by=['name']
+
+    class Meta:
         abstract=True
 
 #base class for exceptions
@@ -46,11 +48,14 @@ class ContentType(TreeModelBase):
     pass
 
 class Menu(TreeModelBase):
-    state=models.CharField(max_length=32, choices=[('draft','draft'),('confirmed','confirmed'),('cancel','cancel')]
-    url=models.UrlField()
-    
+    state=models.CharField(max_length=32, choices=[('draft','draft'),('confirmed','confirmed'),('cancel','cancel')])
+    url=models.URLField()
 
-
-
-
-    
+class Page(BaseModel):
+    title = models.CharField(max_length=256)
+    content = models.TextField()
+    author = models.ForeignKey(User, related_name='user_page_set')
+    content_type = models.ForeignKey(ContentType, related_name='page_set')
+    tags = models.ManyToManyField(Tag)
+    state = models.CharField(max_length=32, choices=[('draft','draft'),('published','published'),('cancel','cancel')])
+    publisher = models.ForeignKey(User, related_name='publisher_page_set')  
