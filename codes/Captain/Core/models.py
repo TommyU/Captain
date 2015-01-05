@@ -4,6 +4,26 @@ from mptt.models import MPTTModel,TreeForeignKey
 import logging
 from django.core.exceptions import *
 
+class BaseModelManager(models.Manager):
+    def get_queryset(self):
+        return super(BaseModelManager,self).get_queryset()
+
+    def filter(self,uid,*args,**kwargs):
+        user_obj = User.objects.get(id=uid)
+        method='read'
+        if user_obj and user_obj.has_perm('can_%s_%s'%(method,self.__class__.__name__.lower())):
+            return super(BaseModelManager, self).filter(*args,**kwargs)
+        else:
+            raise PermissionDenied
+
+    def get(self,uid,*args,**kwargs):
+        user_obj = User.objects.get(id=uid)
+        method='read'
+        if user_obj and user_obj.has_perm('can_%s_%s'%(method,self.__class__.__name__.lower())):
+            return super(BaseModelManager, self).get(*args,**kwargs)
+        else:
+            raise PermissionDenied
+
 # base classes for most of the classes
 class BaseModel(models.Model):
     """base class for class which need to be under CRUD control"""
@@ -11,6 +31,7 @@ class BaseModel(models.Model):
     creator = models.ForeignKey(User, related_name='creator_%(class)s_set')
     updated_date = models.DateTimeField(auto_now=True)
     updator = models.ForeignKey(User, related_name='updator_%(class)s_set')
+    objects = BaseModelManager()#TODO:query validation 
 
     class Meta:
         abstract=True
@@ -29,16 +50,13 @@ class BaseModel(models.Model):
         
 
     def delete(self, uid, using=None):
+        """do some validation before delete"""
         user_obj = User.objects.get(id=uid)
-        raise PermissionDenied
         method='delete'
         if user_obj and user_obj.has_perm('can_%s_%s'%(method,self.__class__.__name__.lower())):
             super(BaseModel,self).delete(using)
         else:
             raise PermissionDenied
-
-    #TODO:query validation 
-
 
 class TreeModelBase(MPTTModel,BaseModel):
     """base class for all tree style class"""
