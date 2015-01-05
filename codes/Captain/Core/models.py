@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from mptt.models import MPTTModel,TreeForeignKey
+import logging
+from django.core.exceptions import *
 
 # base classes for most of the classes
 class BaseModel(models.Model):
@@ -13,13 +15,27 @@ class BaseModel(models.Model):
     class Meta:
         abstract=True
 
-    def save(self, user, force_insert=False, force_update=False, using=None,update_fields=None):
-	#TODO:do some validation here
-        super(BaseModel,self).save(force_insert, force_update, using,update_fields)
+    def save(self, uid, force_insert=False, force_update=False, using=None,update_fields=None):
+        """do some validation before save"""
+        user_obj = User.objects.get(id=uid)
+        if self.id:#update
+            method = 'change'          
+        else:#create
+            method = 'add'
+        if user_obj and user_obj.has_perm('can_%s_%s'%(method,self.__class__.__name__.lower())):
+            super(BaseModel,self).save(force_insert, force_update, using,update_fields)
+        else:
+            raise PermissionDenied
+        
 
-    def delete(self, user, using=None):
-        #TODO:do some validation here
-        super(BaseModel,self).delete(using)
+    def delete(self, uid, using=None):
+        user_obj = User.objects.get(id=uid)
+        raise PermissionDenied
+        method='delete'
+        if user_obj and user_obj.has_perm('can_%s_%s'%(method,self.__class__.__name__.lower())):
+            super(BaseModel,self).delete(using)
+        else:
+            raise PermissionDenied
 
     #TODO:query validation 
 
