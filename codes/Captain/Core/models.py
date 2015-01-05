@@ -15,13 +15,14 @@ class BaseModel(models.Model):
 
     def save(self, user, force_insert=False, force_update=False, using=None,update_fields=None):
 	#TODO:do some validation here
-        super(ModelBase,self).save(self, force_insert, force_update, using,update_fields)
+        super(BaseModel,self).save(force_insert, force_update, using,update_fields)
 
     def delete(self, user, using=None):
         #TODO:do some validation here
-        super(ModelBase,self).delete(using)
+        super(BaseModel,self).delete(using)
 
     #TODO:query validation 
+
 
 class TreeModelBase(MPTTModel,BaseModel):
     """base class for all tree style class"""
@@ -33,6 +34,9 @@ class TreeModelBase(MPTTModel,BaseModel):
 
     class Meta:
         abstract=True
+
+    def __unicode__(self):
+        return self.name
 
 #base class for exceptions
 class AccessDenied(Exception):
@@ -58,4 +62,7 @@ class Page(BaseModel):
     content_type = models.ForeignKey(ContentType, related_name='page_set')
     tags = models.ManyToManyField(Tag)
     state = models.CharField(max_length=32, choices=[('draft','draft'),('published','published'),('cancel','cancel')])
-    publisher = models.ForeignKey(User, related_name='publisher_page_set')  
+    publisher = models.ForeignKey(User, related_name='publisher_page_set',blank=True,null=True)  
+
+    def __unicode__(self):
+        return self.title
