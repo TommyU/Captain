@@ -3,6 +3,18 @@ from django.contrib.auth.models import User
 from mptt.models import MPTTModel,TreeForeignKey
 import logging
 from django.core.exceptions import *
+_logger = logging.getLogger(__name__)
+
+class Pool(object):
+    classes = {}
+    @classmethod 
+    def register(self,res_model , res_class):
+        self.classes.update({res_model:res_class})
+    
+    @classmethod 
+    def get(self,res_model):
+        self.classes.get(res_model,None)
+
 
 class BaseModelManager(models.Manager):
     def get_queryset(self):
@@ -32,6 +44,11 @@ class BaseModel(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
     updator = models.ForeignKey(User, related_name='updator_%(class)s_set')
     objects = BaseModelManager()#TODO:query validation 
+
+    def __init__(self, *args, **kwargs):
+        Pool.register(('%s.%s'%(self.__module__,self.__class__.__name__)), self.__class__)
+        _logger.debug('%s registered'%('%s.%s'%(self.__module__,self.__class__.__name__),))
+        models.Model.__init__(self, *args, **kwargs)
 
     class Meta:
         abstract=True
@@ -81,13 +98,24 @@ class AccessDenied(Exception):
 #concret classes below down
 class Tag(TreeModelBase):
     pass
+Tag()#register the Tag class
 
 class ContentType(TreeModelBase):
     pass
+ContentType()#register the ContentType class
 
 class Menu(TreeModelBase):
+    order = models.IntegerField()
     state=models.CharField(max_length=32, choices=[('draft','draft'),('confirmed','confirmed'),('cancel','cancel')])
-    url=models.URLField()
+    url=models.URLField(blank=True)
+    res_model = models.CharField(max_length=256, blank=True)
+
+    def get_data(self):
+        mod = Pool.classes.get(self.res_model,None)
+        #print 'res model:%s, pool clses:%s, mod is none:%s'%(self.res_model,Pool.classes,(not mod))
+        if mod:
+            return mod.objects.all()
+Menu()#register the Menu class
 
 class Page(BaseModel):
     title = models.CharField(max_length=256)
@@ -100,3 +128,4 @@ class Page(BaseModel):
 
     def __unicode__(self):
         return self.title
+Page()#register the Page class
